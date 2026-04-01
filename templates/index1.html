@@ -1,0 +1,2192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VEDA — Factory on the Table</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #020812;
+        --bg2: #071428;
+        --blue: #4fc3ff;
+        --blue-dim: #1e5080;
+        --blue-glow: rgba(79, 195, 255, 0.18);
+        --blue-soft: rgba(79, 195, 255, 0.07);
+        --text: #cde8ff;
+        --text-dim: #6a9fc0;
+        --green: #10b981;
+        --amber: #f59e0b;
+        --red: #ef4444;
+        --border: rgba(79, 195, 255, 0.16);
+      }
+      body {
+        min-height: 100vh;
+        font-family: "Syne", sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      nav {
+        width: 100%;
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        background: rgba(2, 8, 18, 0.88);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        z-index: 100;
+      }
+      .brand-logo {
+        height: 38px;
+        width: auto;
+        display: block;
+        object-fit: contain;
+      }
+      .nav-links {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .nav-btn {
+        font-family: "Syne", sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: var(--blue-soft);
+        color: var(--text);
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .nav-btn:hover {
+        background: var(--blue-glow);
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .nav-btn.accent {
+        background: linear-gradient(135deg, #1a6fa0, #0d3a5c);
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .nav-btn.accent:hover {
+        background: linear-gradient(135deg, #2e90cc, #1a5a88);
+      }
+      #embedStatus {
+        font-size: 11px;
+        color: var(--text-dim);
+        min-width: 90px;
+        text-align: right;
+      }
+
+      .main-screen {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        position: relative;
+        overflow: hidden;
+      }
+      .main-screen::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(79, 195, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(79, 195, 255, 0.03) 1px, transparent 1px);
+        background-size: 56px 56px;
+      }
+
+      .veda-orb {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        flex-shrink: 0;
+        background: radial-gradient(
+          circle at 40% 35%,
+          rgb(33, 91, 132),
+          transparent 70%
+        );
+        box-shadow:
+          0 0 60px rgb(5, 29, 47),
+          inset 0 0 40px rgb(0, 100, 200);
+        cursor: default;
+        user-select: none;
+      }
+      .center-logo {
+        max-width: 65%;
+        max-height: 65%;
+        object-fit: contain;
+        margin-bottom: 22px;
+        pointer-events: none;
+        filter: drop-shadow(0 0 15px rgb(14, 33, 45));
+      }
+      .veda-orb::before {
+        content: "";
+        position: absolute;
+        width: 118%;
+        height: 118%;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          #106d95,
+          transparent 60%,
+          #122a35
+        );
+        animation: orbRotate 5s linear infinite;
+        filter: blur(7px);
+        opacity: 0.6;
+      }
+      .veda-orb::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 1px solid rgb(12, 21, 43);
+        animation: orbPulse 2.4s ease-in-out infinite;
+      }
+      .veda-orb.listening::before {
+        background: conic-gradient(
+          from 0deg,
+          #10b981,
+          transparent 60%,
+          #10b981
+        );
+        animation: orbRotate 0.8s linear infinite;
+        opacity: 0.9;
+      }
+      .veda-orb.speaking::before {
+        background: conic-gradient(
+          from 0deg,
+          #ffc35c,
+          transparent 60%,
+          #ffb637
+        );
+        animation: orbRotate 1.2s linear infinite;
+        opacity: 0.85;
+      }
+      /* QoL #1 — awaiting state: blue slow sweep */
+      .veda-orb.awaiting::before {
+        background: conic-gradient(
+          from 0deg,
+          #4fc3ff,
+          transparent 50%,
+          #4fc3ff
+        );
+        animation: orbRotate 2.5s linear infinite;
+        opacity: 0.7;
+      }
+      .veda-orb.awaiting::after {
+        animation: orbPulse 1s ease-in-out infinite;
+      }
+      @keyframes orbRotate {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes orbPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.55;
+        }
+        50% {
+          transform: scale(1.09);
+          opacity: 0.18;
+        }
+      }
+
+      .main-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 13px;
+        letter-spacing: 6px;
+        color: var(--blue);
+        opacity: 0.7;
+      }
+      #vedaStatus {
+        font-size: 13px;
+        color: var(--blue);
+        letter-spacing: 1.5px;
+        opacity: 0.85;
+        text-align: center;
+        min-height: 18px;
+      }
+
+      .phase-bar {
+        display: flex;
+        align-items: flex-start;
+        width: 88%;
+        max-width: 540px;
+      }
+      .phase-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
+        position: relative;
+      }
+      .phase-step:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        width: 100%;
+        height: 1px;
+        background: var(--border);
+        z-index: 0;
+      }
+      .phase-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        z-index: 1;
+        transition: all 0.3s;
+      }
+      .phase-dot.active {
+        border-color: var(--blue);
+        background: rgba(79, 195, 255, 0.15);
+        box-shadow: 0 0 8px var(--blue);
+      }
+      .phase-dot.done {
+        border-color: var(--green);
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--green);
+      }
+      .phase-label {
+        font-size: 8px;
+        color: var(--text-dim);
+        letter-spacing: 0.5px;
+        text-align: center;
+      }
+      .phase-step.active .phase-label {
+        color: var(--blue);
+      }
+      .phase-step.done .phase-label {
+        color: var(--green);
+      }
+
+      .chat-transcript {
+        width: 88%;
+        max-width: 560px;
+        max-height: 150px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-right: 4px;
+      }
+      .chat-transcript::-webkit-scrollbar {
+        width: 3px;
+      }
+      .chat-transcript::-webkit-scrollbar-thumb {
+        background: var(--blue-dim);
+        border-radius: 2px;
+      }
+      .msg {
+        max-width: 88%;
+        padding: 9px 14px;
+        border-radius: 14px;
+        font-size: 13px;
+        line-height: 1.5;
+        animation: msgIn 0.22s ease;
+      }
+      @keyframes msgIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .msg.veda {
+        align-self: flex-start;
+        background: rgba(79, 195, 255, 0.08);
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .msg.user {
+        align-self: flex-end;
+        background: linear-gradient(135deg, #1a6fa0, #0d3a5c);
+        border: 1px solid var(--blue);
+        color: var(--blue);
+      }
+      .typing-dots {
+        display: inline-flex;
+        gap: 4px;
+        padding: 2px 0;
+      }
+      .typing-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--blue-dim);
+        animation: typingBounce 1.2s ease-in-out infinite;
+      }
+      .typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes typingBounce {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+        }
+        30% {
+          transform: translateY(-6px);
+        }
+      }
+
+      /* QoL #1 — input row glows + pulses when awaiting */
+      .chat-row {
+        width: 88%;
+        max-width: 540px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 30px;
+        padding: 9px 14px;
+        backdrop-filter: blur(12px);
+        transition:
+          border-color 0.25s,
+          box-shadow 0.25s;
+      }
+      .chat-row.focused {
+        border-color: var(--blue);
+      }
+      .chat-row.awaiting {
+        border-color: var(--blue);
+        animation: rowPulse 1.4s ease-in-out infinite;
+      }
+      @keyframes rowPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 3px rgba(79, 195, 255, 0.18);
+        }
+        50% {
+          box-shadow: 0 0 0 7px rgba(79, 195, 255, 0.05);
+        }
+      }
+      .chat-row input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+      }
+      .chat-row input::placeholder {
+        color: var(--text-dim);
+      }
+      /* QoL #1 — "your turn" hint label */
+      #awaitingLabel {
+        font-size: 11px;
+        color: var(--blue);
+        text-align: center;
+        min-height: 16px;
+        letter-spacing: 0.5px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      #awaitingLabel.visible {
+        opacity: 1;
+      }
+      #awaitingLabel .mic-pulse {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--blue);
+        animation: micPulse 1s ease-in-out infinite;
+      }
+      @keyframes micPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.6);
+          opacity: 0.4;
+        }
+      }
+
+      .mic-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1a6fa0, #0d3a5c);
+        border: 1px solid var(--blue);
+        color: var(--blue);
+        font-size: 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .mic-btn:hover {
+        background: linear-gradient(135deg, #2590c8, #1a5888);
+      }
+      .mic-btn.active {
+        background: var(--green);
+        border-color: var(--green);
+        color: #fff;
+      }
+      .send-btn {
+        padding: 7px 18px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #1a6fa0, #0d3a5c);
+        border: 1px solid var(--blue);
+        color: var(--blue);
+        font-family: "Syne", sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .send-btn:hover {
+        background: linear-gradient(135deg, #2590c8, #1a5888);
+      }
+      #micDot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+        animation: blink 0.7s ease-in-out infinite;
+        display: none;
+        flex-shrink: 0;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.25;
+        }
+      }
+      #commandInfo {
+        font-size: 11px;
+        color: var(--text-dim);
+        text-align: center;
+        min-height: 16px;
+        letter-spacing: 0.3px;
+      }
+
+      .overlay-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 8, 18, 0.78);
+        backdrop-filter: blur(6px);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+      }
+      .overlay-backdrop.visible {
+        display: flex;
+      }
+      .panel-card {
+        width: min(96vw, 520px);
+        background: linear-gradient(145deg, #0c2040, #061228);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 28px 28px 24px;
+        box-shadow: 0 0 60px rgba(0, 100, 255, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .panel-card::-webkit-scrollbar {
+        width: 4px;
+      }
+      .panel-card::-webkit-scrollbar-thumb {
+        background: var(--blue-dim);
+        border-radius: 2px;
+      }
+      .panel-card h2 {
+        font-family: "Orbitron", sans-serif;
+        font-size: 15px;
+        color: var(--blue);
+        letter-spacing: 2px;
+      }
+      .panel-question {
+        font-size: 14px;
+        color: var(--text);
+        line-height: 1.6;
+      }
+      .panel-img {
+        width: 100%;
+        max-height: 240px;
+        object-fit: contain;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #000;
+      }
+      .info-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+      .info-row strong {
+        color: var(--text);
+        font-size: 13px;
+      }
+      .info-row input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 10px;
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+        outline: none;
+      }
+      .info-row input:focus {
+        border-color: var(--blue);
+      }
+      .yesno-row {
+        display: flex;
+        gap: 12px;
+      }
+      .btn-yes,
+      .btn-no,
+      .btn-secondary {
+        flex: 1;
+        padding: 11px 0;
+        border-radius: 10px;
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+        letter-spacing: 0.5px;
+      }
+      .btn-yes {
+        background: var(--green);
+        color: #fff;
+      }
+      .btn-yes:hover {
+        filter: brightness(1.1);
+      }
+      .btn-no {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--red);
+        border: 1px solid var(--red);
+      }
+      .btn-no:hover {
+        background: rgba(239, 68, 68, 0.35);
+      }
+      .btn-secondary {
+        background: transparent;
+        color: var(--text-dim);
+        border: 1px solid var(--border);
+      }
+      .panel-status {
+        font-size: 12px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        display: none;
+      }
+      .panel-status.ok {
+        background: rgba(16, 185, 129, 0.12);
+        color: var(--green);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        display: block;
+      }
+      .panel-status.err {
+        background: rgba(239, 68, 68, 0.12);
+        color: var(--red);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        display: block;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(79, 195, 255, 0.15);
+        border-top-color: var(--blue);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        align-self: center;
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .sk-gallery {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .sk-tile {
+        border-radius: 8px;
+        border: 2px solid transparent;
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+        transition:
+          border-color 0.2s,
+          transform 0.15s;
+        background: #000;
+        aspect-ratio: 3/4;
+      }
+      .sk-tile img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .sk-tile:hover {
+        border-color: var(--blue-dim);
+        transform: scale(1.03);
+      }
+      .sk-tile.selected {
+        border-color: var(--blue);
+      }
+      .sk-tile .sk-label {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(2, 6, 17, 0.82);
+        font-size: 9px;
+        color: var(--text-dim);
+        padding: 3px 5px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sk-tile .sk-best-badge {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        background: var(--amber);
+        color: #1c0a00;
+        font-size: 8px;
+        font-weight: 700;
+        padding: 2px 5px;
+        border-radius: 4px;
+      }
+      #resultCard {
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+      }
+      #resultCard.visible {
+        display: flex;
+      }
+      .result-imgs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .result-imgs img {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #000;
+      }
+      .result-label {
+        font-size: 10px;
+        color: var(--text-dim);
+        text-align: center;
+        margin-top: 4px;
+      }
+      .result-badge {
+        text-align: center;
+        font-size: 12px;
+        color: var(--green);
+        font-weight: 600;
+      }
+      #toastWrap {
+        position: fixed;
+        bottom: 24px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 999;
+        pointer-events: none;
+      }
+      .toast {
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+        animation: toastIn 0.3s ease;
+        pointer-events: none;
+      }
+      .toast.ok {
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        color: var(--green);
+      }
+      .toast.err {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: var(--red);
+      }
+      .toast.info {
+        background: rgba(79, 195, 255, 0.15);
+        border: 1px solid rgba(79, 195, 255, 0.3);
+        color: var(--blue);
+      }
+      @keyframes toastIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="/" style="text-decoration: none"
+        ><img src="/static/VedaFullLogo.png" alt="VEDA" class="brand-logo"
+      /></a>
+      <div class="nav-links">
+        <a href="/capture" class="nav-btn">+ Add User</a>
+        <button class="nav-btn accent" id="btnGenEmbed">
+          &#9881; Generate Embeddings
+        </button>
+        <a href="/manage" class="nav-btn">Manage Dataset</a>
+        <span id="embedStatus">Loading&#8230;</span>
+      </div>
+    </nav>
+
+    <div class="main-screen">
+      <p class="main-title">FACTORY ON THE TABLE</p>
+
+      <div class="veda-orb" id="vedaOrb">
+        <img src="/static/VedaIconLogo.png" alt="VEDA" class="center-logo" />
+      </div>
+
+      <div id="vedaStatus">Initializing&#8230;</div>
+
+      <!-- 4-step phase bar (QoL #4: no Phase 1/2 labels) -->
+      <div class="phase-bar">
+        <div class="phase-step" id="ps0">
+          <div class="phase-dot" id="pd0">1</div>
+          <div class="phase-label">GREETING</div>
+        </div>
+        <div class="phase-step" id="ps1">
+          <div class="phase-dot" id="pd1">2</div>
+          <div class="phase-label">ONBOARDING</div>
+        </div>
+        <div class="phase-step" id="ps2">
+          <div class="phase-dot" id="pd2">3</div>
+          <div class="phase-label">VISION AI</div>
+        </div>
+        <div class="phase-step" id="ps3">
+          <div class="phase-dot" id="pd3">4</div>
+          <div class="phase-label">COMPLETE</div>
+        </div>
+      </div>
+
+      <div class="chat-transcript" id="chatTranscript"></div>
+
+      <!-- QoL #1: .awaiting class pulses border when waiting for input -->
+      <div class="chat-row" id="chatRow">
+        <div id="micDot"></div>
+        <input
+          type="text"
+          id="cmdInput"
+          placeholder="Say 'Hi VEDA' or type here&#8230;"
+          autocomplete="off"
+        />
+        <button class="mic-btn" id="micBtn" title="Voice input">
+          &#127897;
+        </button>
+        <button class="send-btn" id="sendBtn">Send</button>
+      </div>
+
+      <!-- QoL #1: contextual hint shown below input -->
+      <div id="awaitingLabel">
+        <span class="mic-pulse"></span
+        ><span id="awaitingText">🎙 Your turn — speak or type</span>
+      </div>
+
+      <div id="commandInfo">Voice system ready</div>
+    </div>
+
+    <!-- Panel 1 -->
+    <div class="overlay-backdrop" id="panel1Backdrop">
+      <div class="panel-card">
+        <h2>VISION AI &#8212; STEP 1 / 3</h2>
+        <p class="panel-question" id="p1Question">Is this you?</p>
+        <img id="p1Img" class="panel-img" src="" alt="Snapshot" />
+        <div class="info-row">
+          <span>Name:</span
+          ><input type="text" id="p1Name" placeholder="Confirm or edit name" />
+        </div>
+        <div class="info-row">
+          <span>Detected:</span><strong id="p1Position">&#8212;</strong>
+        </div>
+        <div class="yesno-row">
+          <button class="btn-yes" id="p1Yes">
+            &#10003; Yes &#8212; this is me
+          </button>
+          <button class="btn-no" id="p1No">&#10007; No &#8212; retake</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2 -->
+    <div class="overlay-backdrop" id="panel2Backdrop">
+      <div class="panel-card">
+        <h2>VISION AI &#8212; STEP 2 / 3</h2>
+        <p class="panel-question" id="p2Question">
+          Is the image clear and well-framed?
+        </p>
+        <img id="p2Img" class="panel-img" src="" alt="Snapshot" />
+        <div class="info-row">
+          <span>Person:</span><strong id="p2Name">&#8212;</strong>
+        </div>
+        <div class="yesno-row">
+          <button class="btn-yes" id="p2Yes">
+            &#10003; Good &#8212; generate sketch
+          </button>
+          <button class="btn-no" id="p2No">&#10007; Retake snapshot</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 3 -->
+    <div class="overlay-backdrop" id="panel3Backdrop">
+      <div class="panel-card">
+        <h2>VISION AI &#8212; STEP 3 / 3</h2>
+        <p class="panel-question" id="p3Question">
+          Generating sketch variants&#8230;
+        </p>
+        <div class="spinner" id="p3Spinner"></div>
+        <img
+          id="p3Preview"
+          class="panel-img"
+          src=""
+          alt="Sketch preview"
+          style="display: none"
+        />
+        <div class="sk-gallery" id="skGallery" style="display: none"></div>
+        <div class="info-row" id="p3SelectedRow" style="display: none">
+          <span>Selected:</span><strong id="p3SelectedLabel">&#8212;</strong>
+        </div>
+        <div class="panel-status" id="p3Status"></div>
+        <div class="yesno-row" id="p3Actions" style="display: none">
+          <button class="btn-yes" id="p3Send">
+            &#128640; Send to Laser &amp; Generate G-code
+          </button>
+          <button class="btn-no" id="p3Retake">&#8617; Retake photo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 4 -->
+    <div class="overlay-backdrop" id="panel4Backdrop">
+      <div class="panel-card">
+        <h2>PROCESS COMPLETE</h2>
+        <div id="resultCard" class="visible">
+          <div class="result-badge" id="resultBadge">
+            &#10003; G-code generated and ready for download
+          </div>
+          <div class="result-imgs">
+            <div>
+              <img id="resSnapshot" src="" alt="Snapshot" />
+              <div class="result-label">Verified Snapshot</div>
+            </div>
+            <div>
+              <img id="resSketch" src="" alt="Sketch" />
+              <div class="result-label" id="resVariantLabel">Sketch</div>
+            </div>
+          </div>
+          <div
+            class="info-row"
+            style="justify-content: center; gap: 14px; margin-top: 4px"
+          >
+            <a
+              id="gcodeDownload"
+              href="#"
+              class="nav-btn accent"
+              download
+              style="text-align: center"
+              >&#11015; Download G-code</a
+            >
+            <button
+              class="btn-secondary"
+              id="btnResultClose"
+              style="max-width: 130px"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toastWrap"></div>
+
+    <script>
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+      function toast(msg, type = "info", ms = 3200) {
+        const t = document.createElement("div");
+        t.className = `toast ${type}`;
+        t.textContent = msg;
+        $("toastWrap").appendChild(t);
+        setTimeout(() => t.remove(), ms);
+      }
+
+      /* ── ORB ── */
+      const orb = $("vedaOrb");
+      function setOrbState(s) {
+        orb.className = "veda-orb" + (s ? ` ${s}` : "");
+      }
+      const IDLE_S = [
+        "System ready",
+        "Scanning\u2026",
+        "Awaiting input",
+        "Recognition active",
+      ];
+      let _sIdx = 0,
+        _sLock = false;
+      setInterval(() => {
+        if (!_sLock)
+          $("vedaStatus").textContent = IDLE_S[_sIdx++ % IDLE_S.length];
+      }, 3000);
+      function setStatus(m, lock = false) {
+        $("vedaStatus").textContent = m;
+        _sLock = lock;
+      }
+
+      /* ── PHASE BAR (4 steps) ── */
+      function setPhase(i) {
+        for (let j = 0; j < 4; j++) {
+          $("pd" + j).className =
+            "phase-dot" + (j < i ? " done" : j === i ? " active" : "");
+          $("ps" + j).className =
+            "phase-step" + (j < i ? " done" : j === i ? " active" : "");
+        }
+      }
+
+      /* ── CHAT ── */
+      const tx = $("chatTranscript");
+      let _te = null;
+      function addMsg(t, w) {
+        const d = document.createElement("div");
+        d.className = "msg " + w;
+        d.textContent = t;
+        tx.appendChild(d);
+        tx.scrollTop = tx.scrollHeight;
+      }
+      function showTyping() {
+        if (_te) return;
+        const d = document.createElement("div");
+        d.className = "msg veda";
+        d.innerHTML =
+          '<div class="typing-dots"><span></span><span></span><span></span></div>';
+        tx.appendChild(d);
+        tx.scrollTop = tx.scrollHeight;
+        _te = d;
+      }
+      function hideTyping() {
+        if (_te) {
+          _te.remove();
+          _te = null;
+        }
+      }
+
+      /* ── QoL #2: vedaSay — TTS fires first, bubble appears ~when voice starts ── */
+      async function vedaSay(text, speak = true) {
+        showTyping();
+        if (speak) {
+          /* Fire TTS immediately so the voice pipeline has no cold-start delay */
+          vedaSpeak(text);
+          /* Wait just long enough for the server to queue the utterance and the
+           audio device to open (~300 ms on most systems) before revealing the
+           chat bubble — this keeps text and voice in lockstep.            */
+          await delay(300);
+        } else {
+          await delay(220);
+        }
+        hideTyping();
+        addMsg(text, "veda");
+        if (speak) {
+          /* Now wait for the remainder of the utterance to finish */
+          await waitUntilSilent();
+        }
+      }
+
+      /* ── TTS ── */
+      function vedaSpeak(t) {
+        fetch("/api/speak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: t }),
+        }).catch(() => {});
+      }
+      async function waitUntilSilent() {
+        for (let i = 0; i < 120; i++) {
+          try {
+            const d = await fetch("/api/speaking_state").then((r) => r.json());
+            if (!d.speaking) return;
+          } catch (_) {
+            return;
+          }
+          await delay(100);
+        }
+      }
+
+      /* ── QoL #1: awaiting indicator ── */
+      function setAwaiting(on, hint = "🎙 Your turn — speak or type") {
+        const row = $("chatRow"),
+          lbl = $("awaitingLabel"),
+          inp = $("cmdInput");
+        if (on) {
+          row.classList.add("awaiting");
+          $("awaitingText").textContent = hint;
+          lbl.classList.add("visible");
+          inp.placeholder = hint;
+          setOrbState("awaiting");
+          setStatus("Waiting for your response…", true);
+        } else {
+          row.classList.remove("awaiting");
+          lbl.classList.remove("visible");
+          inp.placeholder = "Say 'Hi VEDA' or type here…";
+          if (orb.classList.contains("awaiting")) setOrbState("");
+          _sLock = false;
+        }
+      }
+
+      /* ── EMBED STATUS ── */
+      function refreshEmbed() {
+        fetch("/api/system_status")
+          .then((r) => r.json())
+          .then((d) => {
+            const e = $("embedStatus");
+            if (d.dataset_persons === 0) {
+              e.textContent = "No dataset";
+              e.style.color = "var(--red)";
+            } else if (!d.embeddings_loaded) {
+              e.textContent = "\u26a0 No embeddings";
+              e.style.color = "var(--amber)";
+            } else {
+              e.textContent =
+                "\u2713 " +
+                d.dataset_persons +
+                " person" +
+                (d.dataset_persons !== 1 ? "s" : "");
+              e.style.color = "var(--green)";
+            }
+          })
+          .catch(() => {
+            $("embedStatus").textContent = "Offline";
+          });
+      }
+      $("btnGenEmbed").addEventListener("click", () => {
+        $("btnGenEmbed").textContent = "\u23f3 Generating\u2026";
+        $("btnGenEmbed").disabled = true;
+        toast("Generating embeddings\u2026", "info", 8000);
+        fetch("/api/generate_embeddings", { method: "POST" })
+          .then((r) => r.json())
+          .then((d) => {
+            toast(
+              d.success ? "\u2713 " + d.message : "\u2717 " + d.message,
+              d.success ? "ok" : "err",
+            );
+            refreshEmbed();
+          })
+          .catch(() => toast("Network error", "err"))
+          .finally(() => {
+            $("btnGenEmbed").textContent = "\u2699 Generate Embeddings";
+            $("btnGenEmbed").disabled = false;
+          });
+      });
+      refreshEmbed();
+      setInterval(refreshEmbed, 15000);
+
+      /* ── SPEECH RECOGNITION ── */
+      /* Primary: MediaRecorder → POST /api/transcribe → local faster-whisper (tiny.en)
+       Works with DroidCam and any virtual mic because audio never leaves the device.
+       Fallback: browser SpeechRecognition (requires internet / Google servers).       */
+      const SR =
+        window.SpeechRecognition || window.webkitSpeechRecognition || null;
+      let _rec = null,
+        _micOn = false;
+      let _whisperAvailable = null; // null=unknown, true=use whisper, false=use browser STT
+
+      async function _checkWhisper() {
+        if (_whisperAvailable !== null) return _whisperAvailable;
+        try {
+          const r = await fetch("/api/transcribe", {
+            method: "POST",
+            body: new FormData(),
+          });
+          const d = await r.json();
+          // If faster-whisper is installed it returns an error about missing audio,
+          // not about being unavailable — that tells us it's ready.
+          _whisperAvailable = d.error !== "faster-whisper not installed";
+        } catch (_) {
+          _whisperAvailable = false;
+        }
+        console.log(
+          _whisperAvailable
+            ? "[MIC] Using local Whisper STT"
+            : "[MIC] Using browser SpeechRecognition",
+        );
+        return _whisperAvailable;
+      }
+
+      /* MediaRecorder-based recording → Whisper */
+      async function _recordAndTranscribe(onResult) {
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) {
+          toast("Mic access denied: " + e.message, "err");
+          onResult("");
+          return;
+        }
+
+        const chunks = [];
+        // prefer webm/opus; fall back to whatever the browser supports
+        const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : MediaRecorder.isTypeSupported("audio/webm")
+            ? "audio/webm"
+            : "";
+        const mr = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+        mr.ondataavailable = (e) => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
+        mr.onstop = async () => {
+          stream.getTracks().forEach((t) => t.stop());
+          const blob = new Blob(chunks, { type: mimeType || "audio/webm" });
+          const fd = new FormData();
+          fd.append("audio", blob, "audio.webm");
+          try {
+            const r = await fetch("/api/transcribe", {
+              method: "POST",
+              body: fd,
+            });
+            const d = await r.json();
+            onResult(d.success ? d.text.trim() : "");
+          } catch (_) {
+            onResult("");
+          }
+        };
+
+        mr.start();
+        setOrbState("listening");
+        $("micBtn").classList.add("active");
+        $("micDot").style.display = "block";
+        _micOn = true;
+        setStatus("Listening\u2026", true);
+
+        // Stop after 5s silence detection via audio worklet OR simple 6s max timeout
+        // Simple approach: stop after 6 seconds (good enough for short commands)
+        await delay(6000);
+        if (mr.state === "recording") mr.stop();
+        setOrbState("");
+        $("micBtn").classList.remove("active");
+        $("micDot").style.display = "none";
+        _micOn = false;
+      }
+
+      /* Browser SpeechRecognition fallback */
+      function _listenBrowser(hint, onDone) {
+        if (!SR) {
+          toast("Speech recognition not supported in this browser", "err");
+          onDone("");
+          return;
+        }
+        if (_rec) {
+          try {
+            _rec.abort();
+          } catch (_) {}
+        }
+        _rec = new SR();
+        _rec.lang = "en-US";
+        _rec.continuous = false;
+        _rec.interimResults = true;
+        _rec.maxAlternatives = 3;
+        let fin = "";
+        _rec.onresult = (ev) => {
+          let im = "";
+          window._alts = [];
+          for (let i = ev.resultIndex; i < ev.results.length; i++) {
+            const r = ev.results[i];
+            if (r.isFinal) {
+              fin += r[0].transcript;
+              for (let a = 1; a < r.length; a++)
+                window._alts.push(r[a].transcript);
+            } else im += r[0].transcript;
+          }
+          if (hint) $("cmdInput").value = fin || im;
+        };
+        _rec.onend = () => {
+          setOrbState("");
+          $("micBtn").classList.remove("active");
+          $("micDot").style.display = "none";
+          _micOn = false;
+          onDone(fin.trim());
+        };
+        _rec.onerror = (ev) => {
+          setOrbState("");
+          $("micBtn").classList.remove("active");
+          $("micDot").style.display = "none";
+          _micOn = false;
+          // Don't toast "network" errors — that just means Google STT is unavailable
+          if (ev.error !== "aborted" && ev.error !== "network")
+            toast("Mic: " + ev.error, "err");
+          else if (ev.error === "network")
+            toast(
+              "Network STT unavailable — check Whisper install",
+              "info",
+              5000,
+            );
+          onDone(fin.trim());
+        };
+        try {
+          _rec.start();
+          setOrbState("listening");
+          $("micBtn").classList.add("active");
+          $("micDot").style.display = "block";
+          _micOn = true;
+          setStatus("Listening\u2026", true);
+        } catch (e) {
+          toast("Mic: " + e.message, "err");
+          onDone("");
+        }
+      }
+
+      /* Unified listenOnce — picks Whisper or browser automatically */
+      async function listenOnce(hint, onR, onE) {
+        if (_micOn) {
+          try {
+            _rec?.abort();
+          } catch (_) {}
+          return;
+        }
+        await waitUntilSilent();
+        const useWhisper = await _checkWhisper();
+        if (useWhisper) {
+          await _recordAndTranscribe((t) => {
+            if (hint && t) $("cmdInput").value = t;
+            if (onE) onE(t);
+            if (onR && t) onR(t);
+          });
+        } else {
+          _listenBrowser(hint, (t) => {
+            if (onE) onE(t);
+            if (onR && t) onR(t);
+          });
+        }
+      }
+
+      function listenP() {
+        return new Promise((r) => listenOnce(false, null, (t) => r(t)));
+      }
+      const _RET = [
+        "Didn't catch that \u2014 yes or no?",
+        "Yes or no, please?",
+        "One more time \u2014 yes or no?",
+      ];
+      let _ri = 0;
+      async function askYesNo(q) {
+        setAwaiting(true, "🎙 Say yes or no");
+        for (let a = 0; a < 3; a++) {
+          const t = await listenP();
+          if (!t) continue;
+          setAwaiting(false);
+          const tl = t.toLowerCase();
+          if (
+            /\byes\b|\byeah\b|\byep\b|\bcorrect\b|\bgood\b|\bok\b|\bsure\b|\bgo\b|\bright\b|\bproceed\b/.test(
+              tl,
+            )
+          )
+            return "yes";
+          if (
+            /\bno\b|\bnope\b|\bwrong\b|\bretake\b|\bagain\b|\bbad\b|\bcancel\b/.test(
+              tl,
+            )
+          )
+            return "no";
+          if (a < 2) {
+            await vedaSay(_RET[_ri++ % _RET.length]);
+            setAwaiting(true, "🎙 Say yes or no");
+          }
+        }
+        setAwaiting(false);
+        return null;
+      }
+
+      $("micBtn").addEventListener("click", async () => {
+        if (_micOn) {
+          try {
+            _rec?.abort();
+          } catch (_) {}
+          return;
+        }
+        await waitUntilSilent();
+        listenOnce(true, null, async (t) => {
+          if (t) {
+            $("cmdInput").value = t;
+            await handleInput(t);
+          }
+          setStatus("System ready", false);
+          _sLock = false;
+        });
+      });
+      $("sendBtn").addEventListener("click", () => {
+        const t = $("cmdInput").value.trim();
+        if (t) handleInput(t);
+      });
+      $("cmdInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const t = $("cmdInput").value.trim();
+          if (t) handleInput(t);
+        }
+      });
+      $("cmdInput").addEventListener("focus", () =>
+        $("chatRow").classList.add("focused"),
+      );
+      $("cmdInput").addEventListener("blur", () => {
+        if (!$("chatRow").classList.contains("awaiting"))
+          $("chatRow").classList.remove("focused");
+      });
+
+      /* ══════════════════════════════════════════════════════
+       CONVERSATION STATE MACHINE
+       WAIT_GREET → WAIT_FRAME → WAIT_NAME → WAIT_EXPLAIN → WAIT_CAPTURE → IN_FLOW
+
+       CHECKLIST LOCK SYSTEM:
+       ─────────────────────
+       Each step has a slot in `stepAnswers` that records the user's raw text
+       once qwen signals ##ADVANCE## for that step.
+
+       Every call to vedaChat() includes the current checklist so qwen can see
+       exactly which steps are already done — preventing re-asks even if the
+       model loses track.
+
+       WAIT-COUNT OVERRIDE:
+       ────────────────────
+       `stepWaitCount[state]` counts consecutive ##WAIT## responses for each
+       step. If qwen sends ##WAIT## MAX_WAITS times in a row on the same step,
+       the frontend hard-advances regardless — bypassing the model loop entirely.
+       This is the safety net that prevents infinite repetition.
+    ══════════════════════════════════════════════════════ */
+      const S = {
+        WAIT_GREET: "wg",
+        WAIT_FRAME: "wf",
+        WAIT_NAME: "wn",
+        WAIT_EXPLAIN: "we",
+        WAIT_CAPTURE: "wc",
+        IN_FLOW: "if",
+      };
+
+      // How many consecutive ##WAIT## replies before the frontend hard-advances
+      const MAX_WAITS = 2;
+
+      let convState = S.WAIT_GREET,
+        userName = null,
+        currentCommand = null;
+      let vpActive = false,
+        lastFile = null,
+        _poll = null;
+
+      // ── Checklist: records what the user said at each step ────────────────────
+      // Populated when ##ADVANCE## fires. Sent to qwen on every turn as context.
+      const stepAnswers = {
+        [S.WAIT_GREET]: null,
+        [S.WAIT_FRAME]: null,
+        [S.WAIT_NAME]: null,
+        [S.WAIT_EXPLAIN]: null,
+        [S.WAIT_CAPTURE]: null,
+      };
+
+      // ── Per-step wait counter: how many ##WAIT## in a row for this step ───────
+      const stepWaitCount = {
+        [S.WAIT_GREET]: 0,
+        [S.WAIT_FRAME]: 0,
+        [S.WAIT_NAME]: 0,
+        [S.WAIT_EXPLAIN]: 0,
+        [S.WAIT_CAPTURE]: 0,
+      };
+
+      // Conversation history sent to qwen each turn
+      let chatHistory = [];
+
+      // Step labels for qwen orientation
+      const STATE_LABEL = {
+        [S.WAIT_GREET]: "STEP 1 — GREET",
+        [S.WAIT_FRAME]: "STEP 2 — POSITION",
+        [S.WAIT_NAME]: "STEP 3 — NAME",
+        [S.WAIT_EXPLAIN]: "STEP 4 — EXPLAIN",
+        [S.WAIT_CAPTURE]: "STEP 5 — CAPTURE",
+        [S.IN_FLOW]: "STEP 5 — CAPTURE in progress",
+      };
+
+      // Step numbers used in checklist strings
+      const STATE_NUM = {
+        [S.WAIT_GREET]: 1,
+        [S.WAIT_FRAME]: 2,
+        [S.WAIT_NAME]: 3,
+        [S.WAIT_EXPLAIN]: 4,
+        [S.WAIT_CAPTURE]: 5,
+      };
+
+      const STATE_HINT = {
+        [S.WAIT_GREET]: "🎙 Say 'Hi VEDA' to begin",
+        [S.WAIT_FRAME]: "🎙 Say 'Ready' when in position",
+        [S.WAIT_NAME]: "🎙 Tell VEDA your name",
+        [S.WAIT_EXPLAIN]: "🎙 Say 'yes' to proceed",
+        [S.WAIT_CAPTURE]: "🎙 Say 'Capture' when ready",
+      };
+
+      /* Build the checklist string sent to qwen — lists all completed steps */
+      function buildChecklist() {
+        const parts = [];
+        for (const [st, ans] of Object.entries(stepAnswers)) {
+          if (ans !== null) {
+            const num = STATE_NUM[st];
+            if (num) parts.push(`STEP ${num} answered: "${ans}"`);
+          }
+        }
+        return parts.join(" | ");
+      }
+
+      /* Mark a step as complete in the checklist */
+      function lockStep(state, userText) {
+        stepAnswers[state] = userText;
+        stepWaitCount[state] = 0; // reset wait counter now that it's done
+        console.log(
+          `[CHECKLIST] Step ${STATE_NUM[state]} locked: "${userText}"`,
+        );
+      }
+
+      /* ── vedaChat — send message to qwen with checklist context ── */
+      async function vedaChat(userText) {
+        setOrbState("speaking");
+        showTyping();
+        let reply = "",
+          advance = false,
+          capture = false;
+        try {
+          const body = {
+            history: chatHistory,
+            message: `[${STATE_LABEL[convState] || "DEMO"}] ${userText}`,
+            checklist: buildChecklist(), // ← completed steps injected here
+            speak: true,
+          };
+          const r = await fetch("/api/ollama/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const d = await r.json();
+          reply = d.reply || "";
+          advance = !!d.advance;
+          capture = !!d.capture;
+        } catch (_) {
+          reply = "";
+        }
+
+        if (!reply)
+          reply = "Let me just check that — could you say it one more time?";
+
+        await delay(300);
+        hideTyping();
+        addMsg(reply, "veda");
+        await waitUntilSilent();
+        setOrbState("");
+
+        // Update wait counter
+        if (!advance && !capture) {
+          stepWaitCount[convState] = (stepWaitCount[convState] || 0) + 1;
+        } else {
+          stepWaitCount[convState] = 0;
+        }
+
+        // Hard-advance override: if qwen kept saying ##WAIT## too many times,
+        // trust the visitor's last answer and advance regardless
+        if (!advance && !capture && stepWaitCount[convState] >= MAX_WAITS) {
+          console.log(
+            `[LOCK OVERRIDE] Step ${STATE_NUM[convState]} force-advanced after ${MAX_WAITS} ##WAIT## replies`,
+          );
+          advance = true;
+          stepWaitCount[convState] = 0;
+        }
+
+        // Store clean text in history — no state labels, no brackets
+        chatHistory.push({ role: "user", content: userText });
+        chatHistory.push({ role: "assistant", content: reply });
+        if (chatHistory.length > 16) chatHistory = chatHistory.slice(-16);
+
+        return { reply, advance, capture };
+      }
+
+      /* ── Extract name via backend LLM call ── */
+      async function extractName(text) {
+        try {
+          const r = await fetch("/api/extract_name", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          const d = await r.json();
+          if (d.success && d.name) return d.name;
+        } catch (_) {}
+        let m;
+        m = text.match(/\bas\s+([A-Za-z][a-zA-Z]+(?: [A-Z][a-zA-Z]+)*)/i);
+        if (m)
+          return m[1]
+            .split(" ")
+            .map((w) => w[0].toUpperCase() + w.slice(1))
+            .join(" ");
+        m = text.match(
+          /\b(?:Mr|Mrs|Ms|Miss|Dr)\.?\s+([A-Za-z][a-zA-Z]*(?: [A-Z][a-zA-Z]*)*)/i,
+        );
+        if (m)
+          return m[1]
+            .split(" ")
+            .map((w) => w[0].toUpperCase() + w.slice(1))
+            .join(" ");
+        m = text.match(
+          /\b(?:my name is|i am|i'm|call me|know me as|refer to me as)\s+([A-Za-z][a-zA-Z]*(?: [A-Z][a-zA-Z]*)*)/i,
+        );
+        if (m)
+          return m[1]
+            .split(" ")
+            .map((w) => w[0].toUpperCase() + w.slice(1))
+            .join(" ");
+        const stop =
+          /^(my|name|is|i|am|call|me|they|its|it|the|a|an|hi|hello|hey|im|i'm|address|recall|refer|think|should|want|know|tell|would|could|please|mr|mrs|ms|dr|miss|you|your|we|us|let|as|to|of|for|and|or|but|at|in|on|with|just)$/i;
+        const raw =
+          text
+            .trim()
+            .split(/\s+/)
+            .find((w) => w.length > 1 && !stop.test(w)) ||
+          text.trim().split(/\s+/).pop();
+        return raw[0].toUpperCase() + raw.slice(1).toLowerCase();
+      }
+
+      /* ── Step openers — hardcoded, fires exactly once per step ── */
+      const STEP_OPENER_TEXT = {
+        [S.WAIT_FRAME]:
+          "Come stand right in front of the camera so I can see you clearly — say Ready when you're set.",
+        [S.WAIT_NAME]: "What's your name? I'd love to make this personal.",
+        [S.WAIT_EXPLAIN]:
+          "Here's how it works — we take your photo, turn it into a sketch, generate G-code, and the laser engraves it. Want to see it happen?",
+        [S.WAIT_CAPTURE]:
+          "Perfect! Say Capture or just say go whenever you're ready and I'll take the photo.",
+      };
+      async function stepOpen(newState) {
+        const text = STEP_OPENER_TEXT[newState];
+        if (!text) return;
+        chatHistory.push({ role: "assistant", content: text });
+        await vedaSay(text);
+      }
+
+      window.addEventListener("load", () =>
+        setTimeout(async () => {
+          setPhase(0);
+          await vedaSay(
+            "Hi! I am VEDA \u2014 bridging Vision AI, Robotics, and Laser Automation into one seamless demo.",
+          );
+          await vedaSay("Say Hi VEDA to begin.");
+          setAwaiting(true, STATE_HINT[convState]);
+        }, 800),
+      );
+
+      async function handleInput(text) {
+        if (!text.trim()) return;
+        if (convState === S.IN_FLOW) {
+          toast("Please use the popup buttons.", "info");
+          return;
+        }
+        setAwaiting(false);
+        addMsg(text, "user");
+        $("cmdInput").value = "";
+
+        const { reply, advance, capture } = await vedaChat(text);
+
+        if (convState === S.WAIT_GREET) {
+          if (advance) {
+            lockStep(S.WAIT_GREET, text);
+            convState = S.WAIT_FRAME;
+            setPhase(1);
+            await stepOpen(S.WAIT_FRAME);
+          }
+          setAwaiting(true, STATE_HINT[convState]);
+          return;
+        }
+
+        if (convState === S.WAIT_FRAME) {
+          if (advance) {
+            lockStep(S.WAIT_FRAME, text);
+            convState = S.WAIT_NAME;
+            await stepOpen(S.WAIT_NAME);
+          }
+          setAwaiting(true, STATE_HINT[convState]);
+          return;
+        }
+
+        if (convState === S.WAIT_NAME) {
+          if (advance) {
+            lockStep(S.WAIT_NAME, text);
+            userName = await extractName(text);
+            convState = S.WAIT_EXPLAIN;
+            setPhase(2);
+            await stepOpen(S.WAIT_EXPLAIN);
+          }
+          setAwaiting(true, STATE_HINT[convState]);
+          return;
+        }
+
+        if (convState === S.WAIT_EXPLAIN) {
+          if (advance) {
+            lockStep(S.WAIT_EXPLAIN, text);
+            convState = S.WAIT_CAPTURE;
+            await stepOpen(S.WAIT_CAPTURE);
+          }
+          setAwaiting(true, STATE_HINT[convState]);
+          return;
+        }
+
+        if (convState === S.WAIT_CAPTURE) {
+          if (capture || advance) {
+            lockStep(S.WAIT_CAPTURE, text);
+            convState = S.IN_FLOW;
+            setAwaiting(false);
+            setStatus("Capturing\u2026", true);
+            try {
+              const res = await fetch("/api/voice_command", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  text: "detect " + (userName || "person"),
+                }),
+              });
+              const d = await res.json();
+              if (d.success) {
+                currentCommand = d.command;
+                $("commandInfo").textContent = "\u25b6 " + d.message;
+              }
+            } catch (_) {}
+            setStatus("Searching for you\u2026", true);
+            startPoll();
+          } else {
+            setAwaiting(true, STATE_HINT[convState]);
+          }
+          return;
+        }
+      }
+
+      /* ── SNAPSHOT POLL ── */
+      setInterval(async () => {
+        if (vpActive || convState !== S.IN_FLOW) return;
+        try {
+          const r = await fetch("/api/pending_snapshot");
+          const d = await r.json();
+          if (d.success && d.snapshot && d.snapshot.filename !== lastFile) {
+            lastFile = d.snapshot.filename;
+            if (!vpActive) runFlow(d.snapshot);
+          }
+        } catch (_) {}
+      }, 2000);
+
+      function startPoll() {
+        if (_poll) clearInterval(_poll);
+        const seen = lastFile;
+        const dl = Date.now() + 60000;
+        let dots = 0;
+        _poll = setInterval(async () => {
+          if (vpActive) {
+            clearInterval(_poll);
+            return;
+          }
+          if (Date.now() > dl) {
+            clearInterval(_poll);
+            setStatus("Detection timed out", false);
+            _sLock = false;
+            await vedaSay(
+              "Couldn't detect you in time. Step closer and say Capture to try again.",
+            );
+            await fetch("/api/clear_command", { method: "POST" }).catch(
+              () => {},
+            );
+            currentCommand = null;
+            convState = S.WAIT_CAPTURE;
+            setAwaiting(true, "🎙 Say 'Capture' to try again");
+            return;
+          }
+          try {
+            const r = await fetch("/api/pending_snapshot");
+            const d = await r.json();
+            if (
+              d.success &&
+              d.snapshot &&
+              d.snapshot.filename !== seen &&
+              d.snapshot.filename !== lastFile
+            ) {
+              clearInterval(_poll);
+              lastFile = d.snapshot.filename;
+              if (!vpActive) runFlow(d.snapshot);
+            }
+          } catch (_) {}
+          dots = (dots + 1) % 4;
+          setStatus("Scanning" + ".".repeat(dots + 1), true);
+        }, 600);
+      }
+
+      async function pauseDet() {
+        await fetch("/api/clear_command", { method: "POST" }).catch(() => {});
+        await fetch("/api/reset_snapshot", { method: "POST" }).catch(() => {});
+        currentCommand = null;
+        $("commandInfo").textContent = "Voice system ready";
+      }
+
+      /* ── VERIFICATION FLOW ── */
+      async function runFlow(snap) {
+        if (vpActive) return;
+        vpActive = true;
+        if (_poll) {
+          clearInterval(_poll);
+          _poll = null;
+        }
+        let file = snap.filename,
+          person = snap.person_name || userName || "Unknown",
+          pos = snap.position_desc || "";
+
+        while (true) {
+          const a = await p1(file, person, pos);
+          if (a === "yes") {
+            person = $("p1Name").value.trim() || person;
+            break;
+          }
+          await discardFile(file);
+          await pauseDet();
+          await vedaSay("Let me take a fresh photo \u2014 hold still.");
+          const f = await doRetake(file);
+          if (!f) {
+            return timedOut();
+          }
+          file = f.filename;
+          person = f.person_name || userName || "Unknown";
+          pos = f.position_desc || "";
+        }
+        while (true) {
+          const a = await p2(file, person);
+          if (a === "yes") break;
+          await discardFile(file);
+          await pauseDet();
+          await vedaSay(
+            "Image wasn't clear. Capturing again \u2014 hold still.",
+          );
+          const f = await doRetake(file);
+          if (!f) {
+            return timedOut();
+          }
+          file = f.filename;
+          person = f.person_name || userName || "Unknown";
+          pos = f.position_desc || "";
+        }
+
+        let vFile = null,
+          sFile = null,
+          sVars = [];
+        while (true) {
+          const a = await p3(file, person, pos);
+          if (a === "send") {
+            vFile = _a3.vf;
+            sFile = _a3.cs;
+            sVars = _a3.vs;
+            break;
+          }
+          if (_a3.vf) await discardFile(_a3.vf);
+          await discardFile(file);
+          await pauseDet();
+          await vedaSay(
+            "Capturing a fresh photo for a better sketch \u2014 hold still.",
+          );
+          const f = await doRetake(file);
+          if (!f) {
+            return timedOut();
+          }
+          file = f.filename;
+          person = f.person_name || person;
+          pos = f.position_desc || "";
+        }
+
+        setPhase(3);
+        setStatus("Generating G-code\u2026", true);
+        setOrbState("speaking");
+        await vedaSay("Sketch confirmed. Converting to G-code now.");
+        await fetch("/api/send_sketch_to_laser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: sFile }),
+        }).catch(() => {});
+        const gr = await fetch("/api/generate_gcode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: sFile, person_name: person }),
+        }).catch(() => null);
+        let gcUrl = null;
+        if (gr && gr.ok) {
+          const gd = await gr.json();
+          if (gd.success) gcUrl = "/api/get_gcode/" + gd.gcode_filename;
+        }
+        await fetch("/api/clear_command_after_finalise", {
+          method: "POST",
+        }).catch(() => {});
+        currentCommand = null;
+        setOrbState("");
+        const sel = sVars.find((v) => v.filename === sFile);
+        showP4(
+          vFile,
+          sFile,
+          sel ? "#" + sel.variant_num + " " + sel.variant_label : "Sketch",
+          gcUrl,
+        );
+        vpActive = false;
+        convState = S.WAIT_CAPTURE;
+        _sLock = false;
+        $("commandInfo").textContent = "Process complete";
+        toast("\u2713 Complete for " + person, "ok");
+        await vedaSay(
+          "Done, " +
+            person +
+            "! G-code is ready for download. Say Capture to run again.",
+        );
+        setAwaiting(true, "🎙 Say 'Capture' to run again");
+      }
+
+      async function timedOut() {
+        vpActive = false;
+        convState = S.WAIT_CAPTURE;
+        _sLock = false;
+        setPhase(2);
+        await vedaSay(
+          "Detection timed out. Step closer and say Capture to try again.",
+        );
+        setAwaiting(true, "🎙 Say 'Capture' to try again");
+      }
+
+      async function doRetake(old) {
+        try {
+          const res = await fetch("/api/voice_command", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: "detect " + (userName || "person") }),
+          });
+          const d = await res.json();
+          if (d.success) currentCommand = d.command;
+        } catch (_) {}
+        setStatus("Waiting for snapshot\u2026", true);
+        const dl = Date.now() + 60000;
+        while (Date.now() < dl) {
+          await delay(700);
+          try {
+            const r = await fetch("/api/pending_snapshot");
+            const d = await r.json();
+            if (d.success && d.snapshot && d.snapshot.filename !== old) {
+              lastFile = d.snapshot.filename;
+              return d.snapshot;
+            }
+          } catch (_) {}
+        }
+        await fetch("/api/clear_command", { method: "POST" }).catch(() => {});
+        return null;
+      }
+
+      /* ── PANEL HELPERS ── */
+      function p1(filename, person, pos) {
+        return new Promise(async (res) => {
+          $("p1Img").src = "/api/get_snapshot/" + filename;
+          $("p1Name").value = person;
+          $("p1Position").textContent = pos || "\u2014";
+          const q = "Is this you, " + (userName || person) + "?";
+          $("p1Question").textContent = q;
+          $("panel1Backdrop").classList.add("visible");
+          await vedaSay("Your photo has been taken. " + q);
+          setAwaiting(true, "🎙 Say yes or no");
+          let done = false;
+          function done1(v) {
+            if (!done) {
+              done = true;
+              setAwaiting(false);
+              $("panel1Backdrop").classList.remove("visible");
+              res(v);
+            }
+          }
+          askYesNo(q).then((a) => done1(a === "yes" ? "yes" : "no"));
+          $("p1Yes").onclick = () => done1("yes");
+          $("p1No").onclick = () => done1("no");
+        });
+      }
+
+      function p2(filename, person) {
+        return new Promise(async (res) => {
+          $("p2Img").src = "/api/get_snapshot/" + filename;
+          $("p2Name").textContent = person;
+          $("p2Question").textContent =
+            "Does this snapshot look sharp and well-framed?";
+          $("panel2Backdrop").classList.add("visible");
+          await vedaSay("Does the image look clear and well-framed?");
+          setAwaiting(true, "🎙 Say yes or no");
+          let done = false;
+          function done2(v) {
+            if (!done) {
+              done = true;
+              setAwaiting(false);
+              $("panel2Backdrop").classList.remove("visible");
+              res(v);
+            }
+          }
+          askYesNo("Does the snapshot look good enough?").then((a) =>
+            done2(a === "yes" ? "yes" : "no"),
+          );
+          $("p2Yes").onclick = () => done2("yes");
+          $("p2No").onclick = () => done2("no");
+        });
+      }
+
+      let _a3 = { vf: null, cs: null, vs: [] };
+      function p3(filename, person, pos) {
+        return new Promise(async (res) => {
+          _a3 = { vf: null, cs: null, vs: [] };
+          $("p3Preview").style.display = "none";
+          $("skGallery").style.display = "none";
+          $("p3SelectedRow").style.display = "none";
+          $("p3Actions").style.display = "none";
+          $("p3Spinner").style.display = "block";
+          $("p3Status").className = "panel-status";
+          $("p3Question").textContent =
+            "Generating sketch variants \u2014 please wait\u2026";
+          $("panel3Backdrop").classList.add("visible");
+          setStatus("Generating sketches\u2026", true);
+          setOrbState("speaking");
+          vedaSpeak(
+            "Generating sketch variations \u2014 applying contrast and detail enhancement.",
+          );
+          await waitUntilSilent();
+          setOrbState("");
+          let data = null;
+          try {
+            const r = await fetch("/api/verify_snapshot", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                temp_filename: filename,
+                person_name: person,
+                position_desc: pos || "",
+                create_sketch: true,
+                company: "AABBCC",
+              }),
+            });
+            data = await r.json();
+          } catch (_) {
+            data = null;
+          }
+          $("p3Spinner").style.display = "none";
+          if (!data || !data.success || !data.sketch_variants?.length) {
+            $("p3Status").textContent = "\u2717 Sketch generation failed";
+            $("p3Status").className = "panel-status err";
+            $("p3Question").textContent =
+              "Could not generate sketch. Retake photo?";
+            $("p3Actions").style.display = "flex";
+            $("p3Send").style.display = "none";
+            $("p3Retake").textContent = "\u21b9 Yes \u2014 retake photo";
+            $("p3Retake").style.flex = "1";
+            await vedaSay(
+              "Sketch generation failed. You can retake the photo.",
+            );
+            setAwaiting(true, "🎙 Click retake or say no");
+            let done = false;
+            function failD(v) {
+              if (!done) {
+                done = true;
+                setAwaiting(false);
+                $("panel3Backdrop").classList.remove("visible");
+                res(v);
+              }
+            }
+            $("p3Retake").onclick = () => failD("retake");
+            return;
+          }
+          _a3.vf = data.verified_filename;
+          _a3.vs = data.sketch_variants;
+          _a3.cs = data.sketch_variants[0].filename;
+          const pv = $("p3Preview");
+          pv.src = "/api/get_snapshot/" + _a3.cs;
+          pv.style.display = "block";
+          const gl = $("skGallery");
+          gl.innerHTML = "";
+          data.sketch_variants.forEach((v, idx) => {
+            const tile = document.createElement("div");
+            tile.className = "sk-tile" + (idx === 0 ? " selected" : "");
+            tile.dataset.filename = v.filename;
+            const img = document.createElement("img");
+            img.src = "/api/get_snapshot/" + v.filename;
+            img.loading = "lazy";
+            img.alt = v.variant_label;
+            tile.appendChild(img);
+            if (v.is_best) {
+              const b = document.createElement("div");
+              b.className = "sk-best-badge";
+              b.textContent = "\u2605 BEST";
+              tile.appendChild(b);
+            }
+            const lbl = document.createElement("div");
+            lbl.className = "sk-label";
+            lbl.textContent = "#" + v.variant_num + " " + v.variant_label;
+            tile.appendChild(lbl);
+            tile.addEventListener("click", () => {
+              gl.querySelectorAll(".sk-tile").forEach((t) =>
+                t.classList.remove("selected"),
+              );
+              tile.classList.add("selected");
+              _a3.cs = v.filename;
+              pv.src = "/api/get_snapshot/" + v.filename;
+              $("p3SelectedLabel").textContent =
+                "#" + v.variant_num + " " + v.variant_label;
+            });
+            gl.appendChild(tile);
+          });
+          gl.style.display = "grid";
+          $("p3SelectedRow").style.display = "flex";
+          $("p3SelectedLabel").textContent =
+            "#" +
+            data.sketch_variants[0].variant_num +
+            " " +
+            data.sketch_variants[0].variant_label;
+          $("p3Send").style.display = "";
+          $("p3Retake").textContent = "\u21b9 Retake photo";
+          $("p3Retake").style.flex = "";
+          $("p3Status").textContent =
+            "\u2713 " +
+            data.sketch_variants.length +
+            " variants \u2014 best auto-selected";
+          $("p3Status").className = "panel-status ok";
+          $("p3Actions").style.display = "flex";
+          $("p3Question").textContent =
+            data.sketch_variants.length +
+            " variants ready. Pick your favourite or send the selected one.";
+          await vedaSay(
+            "Sketches are ready \u2014 best version auto-selected. Send it to the laser?",
+          );
+          setAwaiting(true, "🎙 Say yes to send, no to retake");
+          let done = false;
+          function done3(v) {
+            if (!done) {
+              done = true;
+              setAwaiting(false);
+              $("panel3Backdrop").classList.remove("visible");
+              res(v);
+            }
+          }
+          askYesNo("Send the selected sketch to the laser?").then((a) => {
+            if (a === "yes") done3("send");
+            else if (a === "no") done3("retake");
+          });
+          $("p3Send").onclick = () => done3("send");
+          $("p3Retake").onclick = () => done3("retake");
+        });
+      }
+
+      function showP4(sf, sk, vl, gu) {
+        $("resSnapshot").src = "/api/get_snapshot/" + sf;
+        $("resSketch").src = "/api/get_snapshot/" + sk;
+        $("resVariantLabel").textContent = vl;
+        if (gu) {
+          $("gcodeDownload").href = gu;
+          $("gcodeDownload").style.display = "inline-block";
+          $("resultBadge").textContent =
+            "\u2713 Sketch sent to laser & G-code generated";
+        } else {
+          $("gcodeDownload").style.display = "none";
+          $("resultBadge").textContent = "\u2713 Sketch sent to laser";
+        }
+        $("panel4Backdrop").classList.add("visible");
+      }
+      $("btnResultClose").addEventListener("click", () => {
+        $("panel4Backdrop").classList.remove("visible");
+      });
+
+      async function discardFile(fn) {
+        if (!fn) return;
+        await fetch("/api/discard_snapshot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: fn }),
+        }).catch(() => {});
+      }
+    </script>
+  </body>
+</html>

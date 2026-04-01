@@ -1,0 +1,279 @@
+{% extends "base.html" %} {% block title %}Add User - Capture Dataset{% endblock
+%} {% block content %}
+<div class="page-container">
+  <div class="back-button-container">
+    <a href="/" class="btn-back">← Back to Recognition</a>
+  </div>
+
+  <div class="capture-layout">
+    <div class="capture-video-section">
+      <h2>📸 Capture Face Dataset</h2>
+      <p class="subtitle">
+        Uses server camera - Captures 50 images automatically
+      </p>
+
+      <div class="capture-video-container">
+        <img
+          id="serverFeed"
+          src="/video_feed"
+          style="width: 100%; display: block"
+        />
+
+        <div class="capture-overlay">
+          <div class="capture-count" id="captureCount">0 / 50</div>
+          <div class="capture-status" id="captureStatus">Ready</div>
+        </div>
+      </div>
+
+      <div class="preview-grid" id="previewGrid"></div>
+    </div>
+
+    <div class="capture-controls-section">
+      <div class="control-card">
+        <h3>👤 Person Information</h3>
+        <div class="form-group">
+          <label>Person Name:</label>
+          <input
+            type="text"
+            id="personName"
+            placeholder="User1, Alice, Bob..."
+            class="input-field"
+            autocomplete="off"
+          />
+          <p class="help-text">
+            Must match exactly when recognizing (case-sensitive)
+          </p>
+        </div>
+      </div>
+
+      <div class="control-card">
+        <h3>🎬 Capture Controls</h3>
+        <button id="startBtn" class="btn-large btn-primary" disabled>
+          ▶ Start Capture (50 images)
+        </button>
+        <button id="stopBtn" class="btn-large btn-danger" style="display: none">
+          ⏹ Stop Early
+        </button>
+        <button
+          id="resetBtn"
+          class="btn-large btn-secondary"
+          style="display: none"
+        >
+          🔄 Start Over
+        </button>
+      </div>
+
+      <div class="control-card">
+        <h3>📋 Instructions</h3>
+        <ol class="instructions-list">
+          <li>Enter person's name above</li>
+          <li>Click "Start Capture"</li>
+          <li>Look at camera feed on left</li>
+          <li>
+            <strong>Move your head slowly:</strong>
+            <ul>
+              <li>Turn left, then right</li>
+              <li>Tilt up, then down</li>
+              <li>Different expressions</li>
+            </ul>
+          </li>
+          <li>System captures 50 images (every 400ms)</li>
+          <li>Auto-stops when complete</li>
+        </ol>
+      </div>
+
+      <div class="control-card">
+        <h3>💡 Tips</h3>
+        <div class="tips-compact">
+          <div class="tip-item">
+            💡 <strong>Lighting:</strong> Good, even lighting
+          </div>
+          <div class="tip-item">
+            📐 <strong>Angles:</strong> Turn head slowly
+          </div>
+          <div class="tip-item">
+            😊 <strong>Expressions:</strong> Vary your face
+          </div>
+          <div class="tip-item">
+            👓 <strong>Accessories:</strong> With/without glasses
+          </div>
+        </div>
+      </div>
+
+      <div class="control-card">
+        <h3>✅ After Capture</h3>
+        <ol class="next-steps-list">
+          <li>Click "🧠 Generate Embeddings" in navbar</li>
+          <li>Wait for processing to complete</li>
+          <li>Return to home page</li>
+          <li>Enter command and start recognition!</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // Global variables
+  let capturing = false;
+  let captureInterval = null;
+  let captureCount = 0;
+  const MAX_CAPTURES = 50;
+  const CAPTURE_DELAY = 400;
+  let personName = "";
+  let capturedImages = [];
+
+  // Enable start button when name entered
+  document.getElementById("personName").addEventListener("input", function () {
+    document.getElementById("startBtn").disabled = !this.value.trim();
+  });
+
+  // Start capture
+  document.getElementById("startBtn").addEventListener("click", function () {
+    personName = document.getElementById("personName").value.trim();
+    if (!personName) return;
+
+    // Reset
+    captureCount = 0;
+    capturedImages = [];
+    document.getElementById("previewGrid").innerHTML = "";
+
+    // Update UI
+    capturing = true;
+    this.style.display = "none";
+    document.getElementById("stopBtn").style.display = "block";
+    document.getElementById("personName").disabled = true;
+    document.getElementById("captureStatus").textContent =
+      "📸 Capturing from server...";
+    document.getElementById("captureStatus").style.color = "#f59e0b";
+
+    // Start interval
+    captureInterval = setInterval(captureFromServer, CAPTURE_DELAY);
+  });
+
+  // Stop capture
+  document.getElementById("stopBtn").addEventListener("click", stopCapture);
+
+  // Reset
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    location.reload();
+  });
+
+  // Capture from server
+  async function captureFromServer() {
+    if (!capturing || captureCount >= MAX_CAPTURES) {
+      if (captureCount >= MAX_CAPTURES) {
+        stopCapture();
+      }
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/capture_frame", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.image) {
+        // Convert base64 to blob
+        const byteCharacters = atob(data.image);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "image/jpeg" });
+
+        capturedImages.push(blob);
+        captureCount++;
+
+        document.getElementById("captureCount").textContent =
+          captureCount + " / " + MAX_CAPTURES;
+
+        // Add preview
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(blob);
+        img.className = "preview-thumb";
+        document.getElementById("previewGrid").appendChild(img);
+
+        if (captureCount >= MAX_CAPTURES) {
+          stopCapture();
+        }
+      }
+    } catch (err) {
+      console.error("Capture error:", err);
+    }
+  }
+
+  // Stop capture
+  async function stopCapture() {
+    capturing = false;
+    clearInterval(captureInterval);
+
+    document.getElementById("stopBtn").style.display = "none";
+    document.getElementById("captureStatus").textContent = "⏳ Uploading...";
+    document.getElementById("captureStatus").style.color = "#0ea5e9";
+
+    await uploadImages();
+  }
+
+  // Upload images
+  async function uploadImages() {
+    const formData = new FormData();
+    formData.append("person_name", personName);
+
+    capturedImages.forEach(function (blob, index) {
+      const filename = String(index).padStart(4, "0") + ".jpg";
+      formData.append("images", blob, filename);
+    });
+
+    try {
+      const response = await fetch("/api/upload_dataset", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        document.getElementById("captureStatus").textContent =
+          "✓ Saved " + data.count + " images!";
+        document.getElementById("captureStatus").style.color = "#10b981";
+        document.getElementById("resetBtn").style.display = "block";
+
+        alert(
+          "✓ Success!\n\nCaptured " +
+            data.count +
+            ' images for "' +
+            personName +
+            '"\n\nNext steps:\n1. Click "🧠 Generate Embeddings" in navbar\n2. Wait for processing\n3. Return to home page',
+        );
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err) {
+      document.getElementById("captureStatus").textContent = "✗ Upload failed";
+      document.getElementById("captureStatus").style.color = "#ef4444";
+      alert("Upload Error: " + err.message);
+      document.getElementById("startBtn").style.display = "block";
+      document.getElementById("startBtn").disabled = false;
+      document.getElementById("personName").disabled = false;
+    }
+  }
+
+  // Allow Enter key
+  document
+    .getElementById("personName")
+    .addEventListener("keypress", function (e) {
+      if (e.key === "Enter" && !document.getElementById("startBtn").disabled) {
+        document.getElementById("startBtn").click();
+      }
+    });
+
+  // Initialize
+  document.getElementById("captureStatus").textContent =
+    "✓ Camera ready (using server feed)";
+  document.getElementById("captureStatus").style.color = "#10b981";
+</script>
+{% endblock %}
